@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Password Strength Checker</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-page:      #050a0e;
+      --bg-panel:     #0a1520;
+      --border-color: #1a3a5c;
+      --text-main:    #c8e6f5;
+      --text-muted:   #4a7a9b;
+      --cyan:         #00d4ff;
+      --green:        #00ff88;
+    }
+
+    body {
+      background: var(--bg-page);
+      font-family: 'Rajdhani', sans-serif;
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 560px;
+      padding: 2rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .corner { position: absolute; width: 20px; height: 20px; border-color: var(--cyan); border-style: solid; }
+    .corner-tl { top:12px; left:12px;   border-width: 2px 0 0 2px; }
+    .corner-tr { top:12px; right:12px;  border-width: 2px 2px 0 0; }
+    .corner-bl { bottom:12px; left:12px;  border-width: 0 0 2px 2px; }
+    .corner-br { bottom:12px; right:12px; border-width: 0 2px 2px 0; }
+
+    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+    .header-title    { font-size:18px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--cyan); }
+    .header-subtitle { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text-muted); letter-spacing:1px; margin-top:2px; }
+
+    .panel { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .panel-label { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text-muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:8px; }
+
+    .input-row { display: flex; align-items: center; gap: 8px; }
+
+    .password-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 16px;
+      color: var(--cyan);
+      caret-color: var(--cyan);
+      letter-spacing: 2px;
+    }
+
+    .password-input::placeholder { color: var(--border-color); }
+
+    .toggle-btn { background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:14px; padding:4px; transition:color 0.2s; }
+    .toggle-btn:hover { color: var(--cyan); }
+
+    .scan-line {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      margin-top: 10px;
+      opacity: 0.4;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s ease;
+    }
+    .scan-line.active { transform: scaleX(1); }
+
+    .meter-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+    .strength-label { font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); transition:color 0.3s; }
+
+    .bar-segments { display:flex; gap:3px; margin-bottom:12px; }
+    .bar-segment  { flex:1; height:6px; border-radius:2px; background:var(--border-color); transition:background 0.3s, box-shadow 0.3s; }
+
+    .stats-row { display:flex; justify-content:space-between; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text-muted); }
+    .stats-row .value { color: var(--text-main); }
+
+    .checklist { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+    .check-item { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:500; color:var(--text-muted); transition:color 0.3s; }
+    .check-item.passed { color: var(--green); }
+    .check-dot  { width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; transition:box-shadow 0.3s; }
+    .check-item.passed .check-dot { box-shadow: 0 0 6px var(--green); }
+
+    .crack-row { display:flex; justify-content:space-between; align-items:center; }
+    .crack-time-value { font-size:15px; font-weight:700; letter-spacing:1px; color:var(--cyan); transition:color 0.3s; }
+
+    .tip-line { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text-muted); line-height:1.8; letter-spacing:0.5px; }
+    .tip-line::before { content:'> '; color:var(--cyan); }
+
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <div class="grid-bg"></div>
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <!-- Header -->
+    <div class="header">
+      <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
+        <polygon points="16,2 28,9 28,23 16,30 4,23 4,9" stroke="#00d4ff" stroke-width="1.5"/>
+        <text x="16" y="21" text-anchor="middle" font-family="Share Tech Mono" font-size="12" fill="#00d4ff">&#x1F512;</text>
+      </svg>
+      <div>
+        <div class="header-title">Password Analyzer</div>
+        <div class="header-subtitle">PYTHON BACKEND // ENTROPY SCANNER ACTIVE</div>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div class="panel">
+      <div class="panel-label">// Enter target password</div>
+      <div class="input-row">
+        <input
+          type="password"
+          id="passwordInput"
+          class="password-input"
+          placeholder="type here to analyze..."
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button class="toggle-btn" onclick="toggleVisibility()" title="Show / hide">👁</button>
+      </div>
+      <div class="scan-line" id="scanLine"></div>
+    </div>
+
+    <!-- Strength meter -->
+    <div class="panel">
+      <div class="meter-header">
+        <span class="panel-label">// Strength Index</span>
+        <span class="strength-label" id="strengthLabel">AWAITING INPUT</span>
+      </div>
+      <div class="bar-segments">
+        <div class="bar-segment" id="seg-1"></div>
+        <div class="bar-segment" id="seg-2"></div>
+        <div class="bar-segment" id="seg-3"></div>
+        <div class="bar-segment" id="seg-4"></div>
+        <div class="bar-segment" id="seg-5"></div>
+      </div>
+      <div class="stats-row">
+        <span>ENTROPY</span>  <span class="value" id="entropyDisplay">-- bits</span>
+        <span>CHARSET</span>  <span class="value" id="charsetDisplay">--</span>
+        <span>LENGTH</span>   <span class="value" id="lengthDisplay">0 chars</span>
+      </div>
+    </div>
+
+    <!-- Criteria checklist -->
+    <div class="panel">
+      <div class="panel-label">// Security Criteria</div>
+      <div class="checklist">
+        <div class="check-item" id="check-length">  <div class="check-dot"></div> 12+ characters  </div>
+        <div class="check-item" id="check-upper">   <div class="check-dot"></div> Uppercase [A-Z] </div>
+        <div class="check-item" id="check-lower">   <div class="check-dot"></div> Lowercase [a-z] </div>
+        <div class="check-item" id="check-digit">   <div class="check-dot"></div> Digits [0-9]    </div>
+        <div class="check-item" id="check-symbol">  <div class="check-dot"></div> Symbols [!@#…]  </div>
+        <div class="check-item" id="check-norepeat"><div class="check-dot"></div> No repeating    </div>
+      </div>
+    </div>
+
+    <!-- Crack time -->
+    <div class="panel">
+      <div class="crack-row">
+        <span class="panel-label">// Est. crack time (100B hash/s)</span>
+        <span class="crack-time-value" id="crackTimeDisplay">---</span>
+      </div>
+    </div>
+
+    <!-- Tips -->
+    <div class="panel" id="tipsPanel">
+      <div class="tip-line">Waiting for input to generate recommendations...</div>
+    </div>
+
+  </div>
+
+  <script>
+
+    // ── Element references ───────────────────────────────────────────
+
+    const passwordInput    = document.getElementById('passwordInput');
+    const scanLine         = document.getElementById('scanLine');
+    const strengthLabel    = document.getElementById('strengthLabel');
+    const entropyDisplay   = document.getElementById('entropyDisplay');
+    const charsetDisplay   = document.getElementById('charsetDisplay');
+    const lengthDisplay    = document.getElementById('lengthDisplay');
+    const crackTimeDisplay = document.getElementById('crackTimeDisplay');
+    const tipsPanel        = document.getElementById('tipsPanel');
+
+    let isPasswordVisible = false;
+
+
+    // ── Toggle show / hide password ──────────────────────────────────
+
+    function toggleVisibility() {
+      isPasswordVisible = !isPasswordVisible;
+      passwordInput.type = isPasswordVisible ? 'text' : 'password';
+    }
+
+
+    // ── Reset UI to empty state ──────────────────────────────────────
+
+    function resetUI() {
+      strengthLabel.textContent = 'AWAITING INPUT';
+      strengthLabel.style.color = 'var(--text-muted)';
+
+      for (let i = 1; i <= 5; i++) {
+        const seg = document.getElementById('seg-' + i);
+        seg.style.background = 'var(--border-color)';
+        seg.style.boxShadow  = 'none';
+      }
+
+      crackTimeDisplay.textContent = '---';
+      crackTimeDisplay.style.color = 'var(--cyan)';
+      tipsPanel.innerHTML = '<div class="tip-line">Waiting for input to generate recommendations...</div>';
+    }
+
+
+    // ── Apply the API response to the UI ─────────────────────────────
+
+    function applyResult(result) {
+
+      // Stats
+      entropyDisplay.textContent = result.entropy + ' bits';
+      charsetDisplay.textContent = result.charset;
+      lengthDisplay.textContent  = result.length + ' chars';
+
+      // Strength label and color
+      strengthLabel.textContent = result.tier_label;
+      strengthLabel.style.color = result.tier_color;
+
+      // Light up bar segments
+      for (let i = 1; i <= 5; i++) {
+        const seg   = document.getElementById('seg-' + i);
+        const isLit = i <= (result.tier_index + 1);
+        seg.style.background = isLit ? result.tier_color : 'var(--border-color)';
+        seg.style.boxShadow  = isLit ? '0 0 4px ' + result.tier_color : 'none';
+      }
+
+      // Crack time
+      crackTimeDisplay.textContent = result.crack_time;
+      crackTimeDisplay.style.color = result.tier_color;
+
+      // Checklist — map API keys to HTML element IDs
+      const checkMap = {
+        'check-length':   result.checks.length,
+        'check-upper':    result.checks.uppercase,
+        'check-lower':    result.checks.lowercase,
+        'check-digit':    result.checks.digit,
+        'check-symbol':   result.checks.symbol,
+        'check-norepeat': result.checks.no_repeat,
+      };
+
+      for (const [id, passed] of Object.entries(checkMap)) {
+        document.getElementById(id).classList.toggle('passed', passed);
+      }
+
+      // Tips
+      tipsPanel.innerHTML = result.tips
+        .map(tip => `<div class="tip-line">${tip}</div>`)
+        .join('');
+    }
+
+
+    // ── Debounce helper — avoids firing an API call on every keystroke
+
+    function debounce(fn, delayMs) {
+      let timer;
+      return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delayMs);
+      };
+    }
+
+
+    // ── Send password to Python API and update UI ────────────────────
+
+    async function analyzePassword() {
+      const password = passwordInput.value;
+
+      scanLine.classList.toggle('active', password.length > 0);
+
+      if (password.length === 0) {
+        resetUI();
+        return;
+      }
+
+      try {
+        // POST the password to the Flask /api/analyze endpoint
+        const response = await fetch('/api/analyze', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ password }),
+        });
+
+        const result = await response.json();
+        applyResult(result);
+
+      } catch (error) {
+        console.error('API request failed:', error);
+      }
+    }
+
+
+    // ── Attach listener with 150ms debounce ─────────────────────────
+
+    passwordInput.addEventListener('input', debounce(analyzePassword, 150));
+
+  </script>
+</body>
+</html>
