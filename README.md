@@ -1,11 +1,5 @@
 # Password Strength Checker
 
-🔴 **Live Demo:** [Click here to try it](https://0c10c83f-29cb-4d30-9dcb-78e07c7b3e18-00-2epvn7dc9yyt7.sisko.replit.dev)
-
-[![Run on Replit](https://replit.com/badge/github/Mrhonestman/Password-checker)](https://replit.com/@Mrhonestman/Password-checker)
-
-To see live Demo plz contact me becuse for free version it only go live for 5-10sec. 
-
 A cybersecurity tool that analyzes password strength in real time.
 Built with Python Flask backend and a cyberpunk-styled HTML frontend.
 
