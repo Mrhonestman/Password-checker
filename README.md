@@ -16,7 +16,7 @@ Built with Python Flask backend and a cyberpunk-styled HTML frontend.
 - HTML / CSS / JavaScript
 
 ## Project Structure
-\`\`\`
+```text
 Password-checker/
 ├── app.py              # Flask server
 ├── analyzer.py         # Core Python logic
@@ -24,7 +24,7 @@ Password-checker/
 ├── .gitignore          # Git ignore rules
 └── templates/
     └── index.html      # Frontend UI
-\`\`\`
+```
 
 ## How to Run Locally
 \`\`\`bash
